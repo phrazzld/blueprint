@@ -42,6 +42,7 @@ blueprint --help
   - AESTHETIC.md - Design principles and styles
   - ARCHITECTURE.md - System architecture
   - PLAN.md - Project planning
+  - VISION.md - Project vision and strategic goals
   - CHECKLIST.md - Pre/post launch tasks
   - TODO.md - Task tracking
   - BUG.md - Bug tracking

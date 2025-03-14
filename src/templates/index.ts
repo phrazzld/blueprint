@@ -305,6 +305,40 @@ const BUG_CONTENT = `# Bug Tracking
 `;
 
 /**
+ * Default template for VISION.md
+ */
+const VISION_CONTENT = `# Vision
+
+## Project Vision
+A clear, concise statement of the project's long-term vision and purpose.
+
+## Mission Statement
+What the project aims to accomplish and why it matters.
+
+## Core Values
+- 
+- 
+- 
+
+## Target Audience
+- Primary: 
+- Secondary: 
+
+## Success Criteria
+- 
+- 
+- 
+
+## Strategic Goals
+- Short term (3-6 months):
+- Medium term (6-12 months):
+- Long term (1-3 years):
+
+## Differentiation
+What makes this project unique compared to alternatives.
+`;
+
+/**
  * Map of file templates used for generating project documentation
  */
 export const templates: FileTemplateMap = {
@@ -473,5 +507,24 @@ Include these sections:
 7. Reporting Security Vulnerabilities
 
 Format everything in proper markdown with headings, lists, code blocks for examples, and appropriate styling.`
+  },
+  
+  'VISION.md': {
+    defaultContent: VISION_CONTENT,
+    description: 'Project vision, mission, and strategic goals',
+    promptGenerator: (projectName: string) => `Create a comprehensive VISION.md file for a project named "${projectName}".
+
+The document should articulate the project's vision, mission, and strategic direction.
+
+Include these sections:
+1. Project Vision (a concise statement of the long-term vision)
+2. Mission Statement (what the project aims to accomplish and why it matters)
+3. Core Values (3-5 principles that guide the project)
+4. Target Audience (who the project is intended for, with detailed personas if applicable)
+5. Success Criteria (how the project will measure success)
+6. Strategic Goals (short, medium, and long-term objectives)
+7. Differentiation (what makes this project unique compared to alternatives)
+
+Format everything in proper markdown with headings, lists, and appropriate styling.`
   }
 };
