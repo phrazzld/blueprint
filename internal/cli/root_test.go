@@ -3,8 +3,10 @@ package cli
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/phrazzld/blueprint/pkg/log"
 	"github.com/spf13/cobra"
 )
 
@@ -59,6 +61,13 @@ func TestRootCommand(t *testing.T) {
 }
 
 func TestVersionCommand(t *testing.T) {
+	// Save the original logger and restore it later
+	originalLogger := logger
+	defer func() { logger = originalLogger }()
+	
+	// Create a dummy logger that doesn't output anything
+	logger = log.NewLogger(log.ERROR)
+	
 	cmd := NewRootCmd()
 	output, err := executeCommand(cmd, "version")
 	
@@ -66,8 +75,8 @@ func TestVersionCommand(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	
-	expected := "Blueprint version 0.1.0\n"
-	if output != expected {
-		t.Errorf("Expected: %q, got: %q", expected, output)
+	// Check if output contains the version message
+	if !strings.Contains(output, "Blueprint version 0.1.0") {
+		t.Errorf("Expected output to contain version information, got: %q", output)
 	}
 }

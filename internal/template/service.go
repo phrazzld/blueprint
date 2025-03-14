@@ -4,22 +4,40 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/phrazzld/blueprint/internal/openai"
 )
 
 // TemplateService coordinates template-related operations
 type TemplateService struct {
-	Generator *FileGenerator
+	Generator       *FileGenerator
+	ContentGenerator *openai.ContentGenerator
+	UseOpenAI       bool
 }
 
 // NewService creates a new template service
-func NewService(templatesDir string) *TemplateService {
+func NewService(templatesDir string, useOpenAI bool) *TemplateService {
 	loader := NewLoader(templatesDir)
 	engine := NewEngine(loader)
 	generator := NewGenerator(engine)
 	
-	return &TemplateService{
+	service := &TemplateService{
 		Generator: generator,
+		UseOpenAI: useOpenAI,
 	}
+	
+	// Try to initialize OpenAI client if requested
+	if useOpenAI {
+		client, err := openai.NewClient()
+		if err == nil {
+			service.ContentGenerator = openai.NewContentGenerator(client)
+		} else {
+			fmt.Printf("Warning: OpenAI client initialization failed: %v\n", err)
+			fmt.Println("Falling back to template-based generation.")
+		}
+	}
+	
+	return service
 }
 
 // GenerateProjectFiles generates all project files from templates
@@ -37,7 +55,49 @@ func (s *TemplateService) GenerateProjectFiles(projectPath string, data interfac
 	
 	// Generate files from templates
 	for templateName, outputPath := range templateMap {
-		fmt.Printf("Generating %s...\n", filepath.Base(outputPath))
+		fileName := filepath.Base(outputPath)
+		fmt.Printf("Generating %s...\n", fileName)
+		
+		// Check if we should use OpenAI for this file
+		if s.UseOpenAI && s.ContentGenerator != nil {
+			var contentType openai.ContentType
+			var useOpenAI bool
+			
+			switch fileName {
+			case "PLAN.md":
+				contentType = openai.ContentTypePlan
+				useOpenAI = true
+			case "AESTHETIC.md":
+				contentType = openai.ContentTypeAesthetic
+				useOpenAI = true
+			case "ARCHITECTURE.md":
+				contentType = openai.ContentTypeArchitecture
+				useOpenAI = true
+			}
+			
+			if useOpenAI {
+				fmt.Printf("Using OpenAI to generate %s...\n", fileName)
+				content, err := s.ContentGenerator.GenerateContent(contentType, data)
+				if err != nil {
+					fmt.Printf("Error generating content with OpenAI: %v\n", err)
+					fmt.Println("Falling back to template-based generation.")
+				} else {
+					// Write the content to the output file
+					if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+						return fmt.Errorf("error creating directory: %v", err)
+					}
+					
+					if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
+						return fmt.Errorf("error writing file: %v", err)
+					}
+					
+					// Skip template generation for this file
+					continue
+				}
+			}
+		}
+		
+		// Fall back to template generation
 		if err := s.Generator.GenerateFile(templateName, outputPath, data); err != nil {
 			// If the template doesn't exist, create an empty file
 			if os.IsNotExist(err) {

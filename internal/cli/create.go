@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/phrazzld/blueprint/internal/template"
+	"github.com/phrazzld/blueprint/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -13,6 +14,7 @@ import (
 func newCreateCmd() *cobra.Command {
 	var projectName string
 	var projectPath string
+	var useOpenAI bool
 
 	cmd := &cobra.Command{
 		Use:   "create [project-name]",
@@ -34,11 +36,20 @@ func newCreateCmd() *cobra.Command {
 			if projectPath == "" {
 				currentDir, err := os.Getwd()
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error getting current directory: %v\n", err)
-					os.Exit(1)
+					appErr := errors.NewFileSystemError("Failed to get current directory", err)
+					logger.Error("Failed to get current directory", map[string]interface{}{
+						"error": appErr.Error(),
+					})
+					errors.HandleError(appErr, true)
 				}
 				projectPath = filepath.Join(currentDir, projectName)
 			}
+			
+			logger.Info("Creating new project", map[string]interface{}{
+				"name": projectName,
+				"path": projectPath,
+				"openai": useOpenAI,
+			})
 
 			// Initialize project configuration
 			initialConfig := ProjectConfig{
@@ -48,14 +59,21 @@ func newCreateCmd() *cobra.Command {
 			// Run interactive prompts to gather project configuration
 			config, err := runPrompts(initialConfig)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error during interactive prompts: %v\n", err)
-				os.Exit(1)
+				appErr := errors.NewUserInputError("Failed to gather project configuration", err)
+				logger.Error("Failed to gather project configuration", map[string]interface{}{
+					"error": appErr.Error(),
+				})
+				errors.HandleError(appErr, true)
 			}
 			
 			// Create the project directory
 			if err := os.MkdirAll(projectPath, 0755); err != nil {
-				fmt.Fprintf(os.Stderr, "Error creating project directory: %v\n", err)
-				os.Exit(1)
+				appErr := errors.NewFileSystemError("Failed to create project directory", err)
+				logger.Error("Failed to create project directory", map[string]interface{}{
+					"error": appErr.Error(),
+					"path": projectPath,
+				})
+				errors.HandleError(appErr, true)
 			}
 
 			// Find the templates directory
@@ -72,26 +90,44 @@ func newCreateCmd() *cobra.Command {
 					// Try to find it relative to the executable
 					execPath, err := os.Executable()
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "Error finding executable path: %v\n", err)
-						os.Exit(1)
+						appErr := errors.NewFileSystemError("Failed to find executable path", err)
+						logger.Error("Failed to find executable path", map[string]interface{}{
+							"error": appErr.Error(),
+						})
+						errors.HandleError(appErr, true)
 					}
 					
 					refsDir = filepath.Join(filepath.Dir(execPath), "..", "refs")
 					if _, err := os.Stat(refsDir); os.IsNotExist(err) {
-						fmt.Fprintf(os.Stderr, "Error: templates directory not found\n")
-						os.Exit(1)
+						appErr := errors.NewFileSystemError("Templates directory not found", nil)
+						logger.Error("Templates directory not found", map[string]interface{}{
+							"path": refsDir,
+						})
+						errors.HandleError(appErr, true)
 					}
 				}
 			}
 			
+			logger.Info("Using templates directory", map[string]interface{}{
+				"path": refsDir,
+			})
+			
 			// Create a template service
-			templateService := template.NewService(refsDir)
+			templateService := template.NewService(refsDir, useOpenAI)
 			
 			// Generate project files
 			if err := templateService.GenerateProjectFiles(projectPath, config); err != nil {
-				fmt.Fprintf(os.Stderr, "Error generating project files: %v\n", err)
-				os.Exit(1)
+				appErr := errors.NewFileSystemError("Failed to generate project files", err)
+				logger.Error("Failed to generate project files", map[string]interface{}{
+					"error": appErr.Error(),
+				})
+				errors.HandleError(appErr, true)
 			}
+
+			logger.Info("Project created successfully", map[string]interface{}{
+				"name": config.Name,
+				"path": projectPath,
+			})
 
 			fmt.Printf("\n✅ Created new project '%s' at: %s\n", config.Name, projectPath)
 			fmt.Println("✅ Generated project files from templates")
@@ -102,6 +138,7 @@ func newCreateCmd() *cobra.Command {
 	// Add flags
 	cmd.Flags().StringVarP(&projectName, "name", "n", "", "Name of the project")
 	cmd.Flags().StringVarP(&projectPath, "path", "p", "", "Path where to create the project")
+	cmd.Flags().BoolVarP(&useOpenAI, "openai", "o", false, "Use OpenAI to generate content")
 
 	return cmd
 }

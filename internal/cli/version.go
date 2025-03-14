@@ -13,6 +13,9 @@ func newVersionCmd() *cobra.Command {
 		Short: "Display the version of Blueprint",
 		Long:  "Display the version of Blueprint CLI tool",
 		Run: func(cmd *cobra.Command, args []string) {
+			logger.Info("Displaying version information", map[string]interface{}{
+				"version": version,
+			})
 			fmt.Printf("Blueprint version %s\n", version)
 		},
 	}

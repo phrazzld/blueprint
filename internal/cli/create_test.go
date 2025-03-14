@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	
+	"github.com/phrazzld/blueprint/pkg/log"
 )
 
 func TestCreateCommand(t *testing.T) {
@@ -19,9 +21,16 @@ func TestCreateCommand(t *testing.T) {
 	testProjectName := "test-project"
 	testProjectPath := filepath.Join(tempDir, testProjectName)
 	
-	// Save the original runPrompts function and restore it later
+	// Save the original logger and runPrompts function and restore them later
+	originalLogger := logger
 	originalRunPrompts := runPrompts
-	defer func() { runPrompts = originalRunPrompts }()
+	defer func() { 
+		logger = originalLogger
+		runPrompts = originalRunPrompts 
+	}()
+	
+	// Create a dummy logger that doesn't output anything
+	logger = log.NewLogger(log.ERROR)
 	
 	// Mock the runPrompts function to avoid interactive prompts during testing
 	runPrompts = func(initialConfig ProjectConfig) (ProjectConfig, error) {
@@ -45,8 +54,9 @@ func TestCreateCommand(t *testing.T) {
 		}
 	}
 	
+	// Run the command with the OpenAI flag
 	cmd := NewRootCmd()
-	output, err := executeCommand(cmd, "create", "--name", testProjectName, "--path", testProjectPath)
+	output, err := executeCommand(cmd, "create", "--name", testProjectName, "--path", testProjectPath, "--openai")
 	
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
