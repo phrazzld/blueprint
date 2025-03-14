@@ -31,9 +31,18 @@ blueprint --help
 
 ## Features
 
-- Creates a DEVREF.md file in the current directory
+- Generates multiple reference documentation files:
+  - README.md - Project overview and instructions
+  - DEVREF.md - Developer reference
+  - AESTHETIC.md - Design principles and styles
+  - ARCHITECTURE.md - System architecture
+  - PLAN.md - Project planning
+  - CHECKLIST.md - Pre/post launch tasks
+  - TODO.md - Task tracking
+  - BUG.md - Bug tracking
 - Simple and lightweight
 - Can be run from any directory
+- Skips existing files
 
 ## Development
 
