@@ -25,6 +25,11 @@ npm link
 # Initialize a project with documentation
 blueprint init
 
+# For AI-powered generation of all documentation files:
+# Edit the .env file created by the tool and add your OpenAI API key
+# OPENAI_API_KEY=your-api-key-here
+blueprint init
+
 # Show help information
 blueprint --help
 ```
@@ -40,6 +45,9 @@ blueprint --help
   - CHECKLIST.md - Pre/post launch tasks
   - TODO.md - Task tracking
   - BUG.md - Bug tracking
+- OpenAI integration for AI-powered content generation
+  - All files can be AI-generated when an OpenAI API key is provided
+  - Falls back to template files when no API key is available
 - Simple and lightweight
 - Can be run from any directory
 - Skips existing files
