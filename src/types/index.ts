@@ -37,9 +37,21 @@ export interface FileTemplate {
   promptGenerator: (projectName: string) => string;
   
   /**
+   * Enhanced prompt generator that uses detailed project info.
+   * This function takes detailed project info and returns a prompt string.
+   */
+  enhancedPromptGenerator?: (projectInfo: ProjectInfo, fileName: string) => string;
+  
+  /**
    * Description of what this file contains.
    */
   description: string;
+  
+  /**
+   * Template renderer function that uses project info to create content.
+   * This is used when AI generation isn't available but we have user input.
+   */
+  renderTemplate?: (projectInfo: ProjectInfo, fileName: string) => string;
 }
 
 /**
@@ -61,4 +73,44 @@ export interface ContentGenerator {
    * @returns A promise that resolves to the generated content or null if generation fails.
    */
   generateContent(prompt: string): Promise<string | null>;
+  
+  /**
+   * Checks if the generator is available and properly configured.
+   * @returns True if the generator is available, false otherwise.
+   */
+  isAvailable(): boolean;
+}
+
+/**
+ * Represents user-provided information about a project.
+ */
+export interface ProjectInfo {
+  /**
+   * Project name.
+   */
+  name: string;
+  
+  /**
+   * Project description.
+   */
+  description: string;
+  
+  /**
+   * Project author.
+   */
+  author: string;
+  
+  /**
+   * Project license.
+   */
+  license: string;
+  
+  /**
+   * Detailed information about each document section.
+   */
+  sections: {
+    [fileName: string]: {
+      [key: string]: string;
+    };
+  };
 }

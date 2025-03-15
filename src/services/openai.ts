@@ -52,8 +52,7 @@ export class OpenAIGenerator implements ContentGenerator {
     }
     
     try {
-      console.log('🤖 Generating content with OpenAI...');
-      
+      // Standard text-based generation
       const response = await this.client.chat.completions.create({
         model: this.model,
         messages: [
