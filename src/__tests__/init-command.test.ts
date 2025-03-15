@@ -2,6 +2,7 @@ import { createInitCommand } from '../commands/init';
 import { DocumentationGenerator } from '../services/generator';
 import { FileService } from '../services/file';
 import { OpenAIGenerator } from '../services/openai';
+import { PromptService } from '../services/prompt';
 import { templates } from '../templates';
 import * as config from '../config';
 
@@ -10,6 +11,7 @@ jest.mock('../services/generator');
 jest.mock('../services/file');
 jest.mock('../services/openai');
 jest.mock('../config');
+jest.mock('../services/prompt');
 
 // Mock process.exit and console
 process.exit = jest.fn() as any;
@@ -20,6 +22,7 @@ describe('Init Command', () => {
   const MockDocumentationGenerator = DocumentationGenerator as jest.MockedClass<typeof DocumentationGenerator>;
   const MockFileService = FileService as jest.MockedClass<typeof FileService>;
   const MockOpenAIGenerator = OpenAIGenerator as jest.MockedClass<typeof OpenAIGenerator>;
+  const MockPromptService = PromptService as jest.MockedClass<typeof PromptService>;
   
   beforeEach(() => {
     jest.clearAllMocks();
@@ -32,6 +35,20 @@ describe('Init Command', () => {
     
     // Mock isAvailable to return true
     MockOpenAIGenerator.prototype.isAvailable = jest.fn().mockReturnValue(true);
+    
+    // Mock PromptService methods
+    MockPromptService.prototype.promptForBasicInfo = jest.fn().mockResolvedValue({
+      name: 'test-project',
+      description: 'A test project',
+      author: 'Test Author',
+      license: 'MIT',
+      sections: {
+        '_brainDump': {
+          'content': 'Test brain dump content'
+        }
+      }
+    });
+    MockPromptService.prototype.confirmGeneration = jest.fn().mockResolvedValue(true);
     
     // Mock process.cwd
     Object.defineProperty(process, 'cwd', {
@@ -56,11 +73,17 @@ describe('Init Command', () => {
     );
     
     // Check that documentation was generated
-    expect(MockDocumentationGenerator.prototype.generateDocumentation).toHaveBeenCalledWith('/test/dir');
+    expect(MockDocumentationGenerator.prototype.generateDocumentation).toHaveBeenCalledWith(
+      '/test/dir',
+      expect.objectContaining({
+        name: 'test-project',
+        description: 'A test project'
+      })
+    );
     
     // Check console output
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Initializing project'));
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Generated 5 documentation files'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Initializing documentation'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Complete! Generated 5 files'));
   });
   
   it('should use custom directory when provided', async () => {
@@ -70,7 +93,12 @@ describe('Init Command', () => {
     await command.parseAsync(['node', 'script', 'init', '--dir', '/custom/dir']);
     
     // Check that documentation was generated in the custom directory
-    expect(MockDocumentationGenerator.prototype.generateDocumentation).toHaveBeenCalledWith('/custom/dir');
+    expect(MockDocumentationGenerator.prototype.generateDocumentation).toHaveBeenCalledWith(
+      '/custom/dir',
+      expect.objectContaining({
+        name: 'test-project'
+      })
+    );
   });
   
   it('should disable AI when --no-ai flag is provided', async () => {
@@ -125,6 +153,38 @@ describe('Init Command', () => {
     await command.parseAsync(['node', 'script', 'init']);
     
     // Check that info message was logged
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No new files were created'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No new files created'));
+  });
+  
+  it('should use non-interactive mode when --no-interactive flag is provided', async () => {
+    const command = createInitCommand();
+    
+    // Simulate command execution with --no-interactive flag
+    await command.parseAsync(['node', 'script', 'init', '--no-interactive']);
+    
+    // Check that PromptService methods weren't called
+    expect(MockPromptService.prototype.promptForBasicInfo).not.toHaveBeenCalled();
+    expect(MockPromptService.prototype.confirmGeneration).not.toHaveBeenCalled();
+    
+    // Check that documentation was still generated
+    expect(MockDocumentationGenerator.prototype.generateDocumentation).toHaveBeenCalledWith('/test/dir', undefined);
+  });
+  
+  it('should initialize DocumentationGenerator with templates including Claude command files', async () => {
+    const command = createInitCommand();
+    
+    // Simulate command execution
+    await command.parseAsync(['node', 'script', 'init', '--no-interactive']);
+    
+    // Check that DocumentationGenerator was initialized with templates that include Claude command files
+    expect(MockDocumentationGenerator).toHaveBeenCalledWith(
+      expect.objectContaining({
+        '.claude/commands/ticket-the-plan.md': expect.any(Object),
+        '.claude/commands/clear-todos.md': expect.any(Object),
+        '.claude/commands/fix-the-bug.md': expect.any(Object)
+      }),
+      expect.any(FileService),
+      expect.any(OpenAIGenerator)
+    );
   });
 });
