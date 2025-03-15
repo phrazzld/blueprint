@@ -30,6 +30,12 @@ blueprint init
 # OPENAI_API_KEY=your-api-key-here
 blueprint init
 
+# Initialize with interactive wizard (default)
+blueprint init
+
+# Initialize without interactive mode
+blueprint init --no-interactive
+
 # Show help information
 blueprint --help
 ```
@@ -48,7 +54,12 @@ blueprint --help
   - BUG.md - Bug tracking
 - OpenAI integration for AI-powered content generation
   - All files can be AI-generated when an OpenAI API key is provided
+  - Intelligently derives aesthetic guidelines from your project description
   - Falls back to template files when no API key is available
+- Streamlined project documentation from a single brain dump
+  - Just tell us about your project in a stream-of-consciousness style
+  - We'll intelligently generate an entire set of detailed docs
+  - Each document builds on the others for comprehensive coverage
 - Simple and lightweight
 - Can be run from any directory
 - Skips existing files
