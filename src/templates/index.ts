@@ -1,6 +1,122 @@
 import { FileTemplateMap } from '../types';
 
 /**
+ * Claude command template for ticket-the-plan.md
+ */
+const TICKET_THE_PLAN_CONTENT = `## 1. Carefully Analyze PLAN.md
+- **Think hard** and thoroughly review the provided \`PLAN.md\`.
+- Explicitly identify:
+  - Core features clearly stated.
+  - Dependencies explicitly defined or implied.
+  - Acceptance criteria clearly documented.
+  - Any implicit requirements or assumptions needing clarification.
+
+## 2. Structure the TODO.md
+- Create or update \`TODO.md\` explicitly in this structured format:
+
+\`\`\`markdown
+# TODO
+
+## [Feature/Section Name from PLAN.md]
+
+- [ ] Task title (atomic and clear)
+  - Explicit Description: Concise, actionable details.
+  - Dependencies: Clearly stated (tasks or external requirements).
+  - Priority: Explicitly defined (high, medium, low).
+
+Repeat explicitly for each distinct task.
+\`\`\`
+
+- Ensure every task is explicitly atomic (each can be implemented, tested, and verified independently).
+
+## 2. Explicitly Prioritize Tasks
+- Think carefully about the optimal sequence:
+  - Clearly order tasks by priority (high-priority tasks first).
+  - Explicitly highlight and resolve dependencies clearly within task ordering.
+
+## 3. Clarify and Document
+- If uncertainty or ambiguity arises during task decomposition, explicitly note this clearly and request clarification.
+- Document all assumptions explicitly made during ticketing clearly at the top of \`TODO.md\`.
+
+## 4. Verify and Summarize
+- Explicitly cross-reference each task with \`PLAN.md\` to ensure comprehensive coverage.
+- Clearly summarize the total number of tasks and their priority distribution at the bottom of \`TODO.md\`.
+
+## Example of Ticketed Task
+
+\`\`\`markdown
+- [ ] Implement user authentication
+  - Explicit Description: Implement Google OAuth login flow, including login and logout functionality, aligned with security standards in DEVREF.md.
+  - Dependencies: None
+  - Priority: High
+\`\`\`
+
+Explicitly follow this structured, reasoning-intensive process to ensure tasks are clearly defined, atomic, and actionable.`;
+
+/**
+ * Claude command template for clear-todos.md
+ */
+const CLEAR_TODOS_CONTENT = `Carefully read the TODO.md file and explicitly select the next highest-priority incomplete item. Clearly document the reason for your choice (priority, dependencies, risk, etc.).
+
+Before implementing, explicitly create a structured implementation plan:
+- Clearly summarize exactly what needs to be done.
+- Explicitly outline your intended approach, considering:
+  - Dependencies on other tasks or systems.
+  - Side-effects and risks clearly identified.
+  - Explicit references to relevant standards from DEVREF.md, AESTHETIC.md, ARCHITECTURE.md, CHECKLIST.md.
+
+Think hard about the optimal implementation strategy and explicitly document your reasoning clearly in this implementation plan.
+
+Then fully implement the solution exactly according to your plan:
+- Explicitly adhere to all guidelines provided in DEVREF.md, AESTHETIC.md, ARCHITECTURE.md, CHECKLIST.md.
+- Immediately verify all relevant builds, linting, and tests explicitly. Clearly document results.
+- If verification fails, explicitly troubleshoot, clearly document your debugging steps, fix the issue, and verify again.
+
+Upon successful verification:
+- Explicitly mark the task as completed in TODO.md.
+- Clearly document your commit message, explicitly summarizing the task and your chosen implementation strategy.
+
+Repeat this structured process iteratively until no incomplete tasks remain in TODO.md.
+
+If at any point uncertainty arises, explicitly pause and request clarification immediately.`;
+
+/**
+ * Claude command template for fix-the-bug.md
+ */
+const FIX_THE_BUG_CONTENT = `A bug report has been provided in BUG.md. Carefully perform the following steps explicitly:
+
+1. **Triage and Hypothesis Formation**
+   - **Think carefully** as you reproduce and verify the bug:
+     - Explicitly document the Reproduction Steps.
+     - Clearly state Expected vs. Actual behavior.
+     - Identify and explicitly document the most likely components or code paths involved.
+   - **Think hard** to form initial hypotheses about potential causes.
+   - Explicitly note if user error seems highly probable, clearly explaining your reasoning.
+
+2. **Structured Debugging**
+   - **Thoughtfully choose** your most promising debugging steps (isolating variables, adding logs, unit tests, bisecting recent changes).
+   - Explicitly document each debugging attempt clearly and chronologically:
+     - **Think carefully** about each step before you perform it.
+     - Explicitly state exactly what was tried, the precise outcome, and **carefully reason** about what each outcome reveals about the bug.
+     - **Reflect thoroughly** on each outcome, updating your hypotheses explicitly based on new insights gained.
+
+3. **Iterative Debugging Loop**
+   - Continue explicitly iterating this debugging approach until the bug is definitively fixed:
+     - **Think hard** about each new insight to refine your understanding further.
+     - Confirm explicitly and clearly document when your fix resolves the issue.
+     - Clearly summarize exactly what code or configuration change resolved the bug.
+
+4. **Postmortem and Reflection**
+   - After fixing the bug, **thoughtfully produce** a concise, structured postmortem that clearly includes:
+     - Root cause explicitly summarized.
+     - Timeline of debugging steps explicitly documented.
+     - Clearly stated final resolution.
+     - Explicit and thoughtful recommendations to prevent recurrence.
+   - **Think carefully** as you commit all changes, explicitly documenting the resolution and referencing the postmortem.
+
+Follow this explicitly structured process, thoughtfully leveraging deep reasoning at each step. Explicitly request clarification whenever uncertainty arises.`;
+
+/**
  * Default template for DEVREF.md
  */
 const DEVREF_CONTENT = `# Software Engineering Best Practices for Claude
@@ -342,27 +458,80 @@ What makes this project unique compared to alternatives.
  * Map of file templates used for generating project documentation
  */
 export const templates: FileTemplateMap = {
+  // Claude commands
+  '.claude/commands/ticket-the-plan.md': {
+    defaultContent: TICKET_THE_PLAN_CONTENT,
+    description: 'Claude command for turning PLAN.md into tickets in TODO.md',
+    promptGenerator: () => '' // No prompt needed since we're using static content
+  },
+  '.claude/commands/clear-todos.md': {
+    defaultContent: CLEAR_TODOS_CONTENT,
+    description: 'Claude command for implementing tasks from TODO.md',
+    promptGenerator: () => '' // No prompt needed since we're using static content
+  },
+  '.claude/commands/fix-the-bug.md': {
+    defaultContent: FIX_THE_BUG_CONTENT,
+    description: 'Claude command for debugging and fixing issues from BUG.md',
+    promptGenerator: () => '' // No prompt needed since we're using static content
+  },
+  
+  // Project documentation
   'DEVREF.md': {
     defaultContent: DEVREF_CONTENT,
     description: 'Developer reference guide and best practices',
     promptGenerator: (projectName: string) => `Create a comprehensive DEVREF.md file for a project named "${projectName}".
 
-The document should serve as a comprehensive reference for developers working on this project.
+Create an opinionated developer reference guide focused on our preferred technologies and practices:
 
-Include these sections:
-1. Overview/Introduction
-2. Commits (conventional commit format guidelines)
-3. Logging & Observability best practices
-4. Testing requirements and approaches
-5. Documentation requirements
-6. Architecture & Design principles
-7. Iterative Development practices
-8. Automation & CI/CD expectations
-9. Security Practices
-10. Performance & Scalability considerations
-11. Handling Technical Debt
+1. Technology Stack & Standards
+   - Primary languages: TypeScript/JavaScript, Go, Rust
+   - Frameworks: Next.js, React, Fastify, Express
+   - Styling: Tailwind CSS
+   - AI integration: OpenAI, Anthropic Claude, Google Gemini APIs
+   - Infrastructure: Docker, Kubernetes, cloud-native approaches
 
-Format everything in proper markdown with headings, lists, and appropriate styling.`
+2. Code Style & Conventions
+   - JavaScript/TypeScript: ESLint with Airbnb or StandardJS style
+   - Go: Follow official Go style guide, use gofmt
+   - Rust: Follow Rust API guidelines
+   - Strong typing preference (TypeScript over JavaScript when possible)
+   - Functional programming patterns where appropriate
+
+3. Git Workflow
+   - Conventional Commits (feat:, fix:, docs:, test:, refactor:, etc.)
+   - Branch naming: feature/*, bugfix/*, release/*, etc.
+   - Pull request review requirements and standards
+   - Commit signing with GPG
+
+4. Testing Standards
+   - Unit testing with appropriate frameworks (Jest, testing-library, Go testing, Rust test)
+   - Integration and E2E testing requirements
+   - Test coverage expectations
+   - Mocking best practices
+
+5. CI/CD Pipeline
+   - GitHub Actions for CI/CD
+   - Required checks before merging
+   - Deployment strategies and environments
+   - Monitoring and observability integration
+
+6. Security Practices
+   - Dependency scanning and updating
+   - Code scanning and SAST tools
+   - Authentication and authorization best practices
+   - Secrets management
+
+7. Performance Considerations
+   - Performance testing requirements
+   - Optimization techniques for specific tech stacks
+   - Profiling tools and methods
+
+8. Documentation Standards
+   - Code documentation requirements
+   - API documentation standards
+   - Architecture documentation updates
+
+Format in professional Markdown with appropriate headings and styling.`
   },
   
   'AESTHETIC.md': {
@@ -370,19 +539,39 @@ Format everything in proper markdown with headings, lists, and appropriate styli
     description: 'Design principles and style guide',
     promptGenerator: (projectName: string) => `Create a comprehensive AESTHETIC.md file for a project named "${projectName}".
           
-The document should define the project's visual identity, design principles, and style guidelines.
+Create a detailed style guide aligned with modern web design best practices:
 
-Include these sections:
-1. Overview/Introduction
-2. Design Principles (3-5 key principles)
-3. Color Palette (with suggested hex codes)
-4. Typography (font recommendations)
-5. Layout Guidelines
-6. Components/UI Elements
-7. Imagery/Icon Guidelines
-8. Voice and Tone
+1. Design Principles
+   - Focus on clean, minimalist, and functional design
+   - Emphasize accessibility and inclusive design principles
+   - Prioritize mobile-first, responsive design approach
 
-Format everything in proper markdown with headings, lists, and appropriate styling.`
+2. Color System
+   - Provide a modern, accessible color palette with hex codes
+   - Include primary, secondary, accent, and neutral colors
+   - Define semantic colors (success, warning, error, info)
+   - Ensure all color combinations meet WCAG AA accessibility standards
+
+3. Typography
+   - Prefer system fonts or well-established web fonts like Inter, Roboto, or SF Pro
+   - Define a clear type scale with specific sizes and weights
+   - Include heading and body text styles with line heights
+
+4. Component Library
+   - Align with Tailwind CSS design patterns when applicable
+   - Define core UI components (buttons, forms, cards, navigation)
+   - Include component variants and states
+
+5. Layout System
+   - Define spacing scale and grid system
+   - Include responsive breakpoints
+   - Document layout patterns and best practices
+
+6. Voice & Tone
+   - Define content principles and writing style
+   - Include examples of effective UI copy
+
+Format in professional Markdown with appropriate headings and styling.`
   },
   
   'ARCHITECTURE.md': {
@@ -390,20 +579,41 @@ Format everything in proper markdown with headings, lists, and appropriate styli
     description: 'System architecture and design',
     promptGenerator: (projectName: string) => `Create a comprehensive ARCHITECTURE.md file for a project named "${projectName}".
 
-The document should outline the system architecture, components, and technical design decisions.
+Create a comprehensive architecture document that aligns with our technology preferences:
 
-Include these sections:
-1. Overview/Introduction
-2. System Design & Architecture (high-level approach)
-3. Components & Services (describe each major component)
-4. Data Flow (how data moves through the system)
+1. System Overview
+   - Describe the overall architecture approach (microservices, monolith, serverless)
+   - Prefer well-established patterns like hexagonal architecture, clean architecture, or MVC
+
+2. Technology Stack
+   - Focus primarily on these preferred technologies:
+     - Languages: TypeScript, JavaScript, Go, Rust
+     - Frontend: Next.js, React, Tailwind CSS
+     - Backend: Fastify, Express, Go standard library
+     - Infrastructure: Docker, Kubernetes, AWS/GCP/Azure
+     - AI Integration: OpenAI, Anthropic Claude, Google Gemini
+
+3. Components & Services
+   - Detail the key system components and their responsibilities
+   - Clearly define service boundaries and communication patterns
+
+4. Data Architecture
+   - Document data models, storage solutions, and access patterns
+   - Consider data flow, persistence, and caching strategies
+
 5. APIs & Interfaces
-6. Security Considerations
-7. Scalability & Performance
-8. Dependencies & External Systems
-9. Deployment Architecture
+   - Define API contracts and standards (REST, GraphQL, RPC)
+   - Document authentication and authorization mechanisms
 
-Format everything in proper markdown with headings, lists, diagrams descriptions, and appropriate styling.`
+6. Security Considerations
+   - Outline the security model and threat mitigations
+   - Include data protection and privacy measures
+
+7. Scalability & Performance
+   - Document scaling strategy and performance optimizations
+   - Include monitoring and observability considerations
+
+Format in professional Markdown with appropriate headings and styling.`
   },
   
   'CHECKLIST.md': {
@@ -431,22 +641,40 @@ Format everything in proper markdown with headings, lists, and appropriate styli
   'PLAN.md': {
     defaultContent: PLAN_CONTENT,
     description: 'Project planning document',
-    promptGenerator: (projectName: string) => `Create a comprehensive PLAN.md file for a project named "${projectName}".
+    promptGenerator: (projectName: string) => `Create a detailed PLAN.md file for a project named "${projectName}".
 
-The document should outline the project plan, roadmap, and strategic approach.
+Craft a detailed, technical, and actionable PLAN.md file to guide immediate development. This document should clearly translate a specific, achievable portion of the overall vision into explicit, implementable engineering tasks.
 
-Include these sections:
-1. Overview/Project Summary
-2. Objectives & Goals
-3. Project Scope
-4. Timeline & Milestones (with realistic phases)
-5. Requirements (functional and non-functional)
-6. Resources & Team Structure
-7. Risk Assessment & Mitigation Strategies
-8. Success Metrics & KPIs
-9. Budget Considerations (if applicable)
+Focus on these key elements:
 
-Format everything in proper markdown with headings, lists, and appropriate styling.`
+1. Clear Scope
+   - Precisely define the immediate, actionable piece of the product vision this plan addresses.
+   - Explicitly state the user or technical problem you're solving now.
+   - Recommend either a web application (preferred for user-facing products) or CLI/TUI (preferred for developer tools).
+
+2. Technical Approach
+   - Strongly prefer these technologies when applicable:
+     - Languages: TypeScript, JavaScript, Go, Rust
+     - Frontend: Next.js, React, Tailwind CSS
+     - Backend: Fastify, Express, Go standard library
+     - Infrastructure: Docker, Kubernetes
+     - AI: OpenAI, Anthropic Claude, Google Gemini APIs
+   - Clearly outline specific technical solutions based on these preferred technologies.
+   - Document the components, systems, and integrations explicitly involved.
+
+3. Acceptance Criteria
+   - Clearly and explicitly define what constitutes successful completion of each task or feature.
+   - Describe user-visible outcomes, technical benchmarks, or system behaviors explicitly.
+
+4. Dependencies & Considerations
+   - Clearly state any explicit dependencies or assumptions required to execute this plan.
+   - Note technical risks, constraints, or considerations explicitly.
+
+5. Resource Requirements
+   - Outline the personnel, tools, technologies, and budget needed for implementation.
+
+Keep the plan focused, technical, and detailed, emphasizing clarity, actionable tasks, and precise acceptance criteria.
+Format in professional Markdown with appropriate headings and styling.`
   },
   
   'TODO.md': {
@@ -465,7 +693,91 @@ Include these sections:
 6. Completed Tasks (initially empty section)
 
 Each task should be formatted as a checkbox list item with a clear, actionable description.
-Format everything in proper markdown with headings, lists, and appropriate styling.`
+Format everything in proper markdown with headings, lists, and appropriate styling.`,
+    
+    enhancedPromptGenerator: (projectInfo, fileName) => {
+      // Get objectives from PLAN.md if available
+      const planObjectives = projectInfo.sections['PLAN.md']?.objectives || '';
+      const planContent = projectInfo.sections['PLAN.md'] ? JSON.stringify(projectInfo.sections['PLAN.md']) : '';
+      
+      return `Create a comprehensive TODO.md file for a project named "${projectInfo.name}".
+
+The project description is: ${projectInfo.description}
+
+This TODO list should be based on the project plan information:
+${planObjectives}
+${planContent}
+
+Include these sections:
+1. Introduction (brief explanation of how to use this document)
+2. High Priority Tasks (extract from the project plan)
+3. Medium Priority Tasks (extract from the project plan)
+4. Low Priority Tasks (extract from the project plan)
+5. Backlog
+6. Completed Tasks (initially empty section)
+
+Each task should be formatted as a checkbox list item with a clear, actionable description.
+Format everything in proper markdown with headings, lists, and appropriate styling.`;
+    },
+    
+    renderTemplate: (projectInfo, fileName) => {
+      // Get objectives from PLAN.md
+      const planObjectives = projectInfo.sections['PLAN.md']?.objectives || '';
+      const tasks = projectInfo.sections[fileName]?.tasks || planObjectives;
+      
+      // Extract tasks based on the input
+      const lines = tasks.split('\n').filter(line => line.trim() !== '');
+      
+      // Try to categorize tasks
+      const highPriority: string[] = [];
+      const mediumPriority: string[] = [];
+      const lowPriority: string[] = [];
+      
+      // Simple prioritization - first 3 tasks are high priority, next 3 medium, rest low
+      for (let i = 0; i < lines.length; i++) {
+        const task = lines[i].trim();
+        if (!task) continue;
+        
+        // Convert to checkbox format if not already
+        const formattedTask = task.startsWith('- [ ]') ? task : `- [ ] ${task}`;
+        
+        if (i < 3) {
+          highPriority.push(formattedTask);
+        } else if (i < 6) {
+          mediumPriority.push(formattedTask);
+        } else {
+          lowPriority.push(formattedTask);
+        }
+      }
+      
+      // If we couldn't extract any tasks, use placeholders
+      if (highPriority.length === 0) highPriority.push('- [ ] Task 1');
+      if (mediumPriority.length === 0) mediumPriority.push('- [ ] Task 2');
+      if (lowPriority.length === 0) lowPriority.push('- [ ] Task 3');
+      
+      return `# To-Do Items
+
+## Introduction
+This document tracks tasks, improvements, and future work items for ${projectInfo.name}.
+Mark tasks as completed by changing \`[ ]\` to \`[x]\`.
+
+## High Priority
+${highPriority.join('\n')}
+
+## Medium Priority
+${mediumPriority.join('\n')}
+
+## Low Priority
+${lowPriority.join('\n')}
+
+## Backlog
+- [ ] Future task 1
+- [ ] Future task 2
+
+## Completed
+<!-- Add completed tasks here -->
+`;
+    }
   },
   
   'README.md': {
@@ -487,7 +799,102 @@ Include these sections:
 9. License Information
 10. Contact/Support
 
-Format everything in proper markdown with headings, code blocks for installation commands, lists, and appropriate styling.`
+Format everything in proper markdown with headings, code blocks for installation commands, lists, and appropriate styling.`,
+    
+    enhancedPromptGenerator: (projectInfo, fileName) => {
+      const features = projectInfo.sections[fileName]?.features || '';
+      
+      return `Create a professional README.md file for a project named "${projectInfo.name}".
+      
+The project description is: ${projectInfo.description}
+The license is: ${projectInfo.license}
+
+User input about features and usage:
+${features}
+
+Include these sections:
+1. Project Title & Description (use the provided name and description)
+2. Features (extract from the user input)
+3. Installation Instructions (extract from the user input if mentioned)
+4. Usage/Quick Start (extract from the user input if mentioned)
+5. Configuration
+6. Contributing Guidelines
+7. License Information (use the provided license)
+
+Format everything in proper markdown with headings, code blocks for installation commands, lists, and appropriate styling.`;
+    },
+    
+    renderTemplate: (projectInfo, fileName) => {
+      const features = projectInfo.sections[fileName]?.features || '';
+      
+      // Extract features from the input
+      const featureLines = features.split('\n')
+        .filter(line => line.trim() !== '')
+        .map(line => line.trim());
+      
+      // Try to identify installation and usage instructions in the features text
+      let installationContent = '';
+      let usageContent = '';
+      let featuresList = '';
+      
+      // Simple extraction logic - look for keywords
+      featuresList = featureLines
+        .filter(line => !line.toLowerCase().includes('install') && !line.toLowerCase().includes('usage:'))
+        .map(line => `- ${line}`)
+        .join('\n');
+      
+      if (featuresList.trim() === '') {
+        featuresList = '- Feature 1\n- Feature 2\n- Feature 3';
+      }
+      
+      // Look for installation instructions
+      const installLines = featureLines.filter(line => 
+        line.toLowerCase().includes('install') || 
+        line.toLowerCase().includes('setup')
+      );
+      
+      if (installLines.length > 0) {
+        installationContent = '```bash\n' + installLines.join('\n') + '\n```';
+      } else {
+        installationContent = '```bash\n# Installation commands\n```';
+      }
+      
+      // Look for usage examples
+      const usageLines = featureLines.filter(line => 
+        line.toLowerCase().includes('usage:') || 
+        line.toLowerCase().includes('example:') ||
+        line.toLowerCase().includes('using')
+      );
+      
+      if (usageLines.length > 0) {
+        usageContent = '```bash\n' + usageLines.join('\n') + '\n```';
+      } else {
+        usageContent = '```bash\n# Usage example\n```';
+      }
+      
+      return `# ${projectInfo.name}
+
+## Overview
+${projectInfo.description}
+
+## Features
+${featuresList}
+
+## Installation
+${installationContent}
+
+## Usage
+${usageContent}
+
+## Configuration
+*Configuration details for your project.*
+
+## Contributing
+*Guidelines for contributing to the project.*
+
+## License
+${projectInfo.license}`;
+    }
   },
   
   'BUG.md': {
@@ -514,17 +921,137 @@ Format everything in proper markdown with headings, lists, code blocks for examp
     description: 'Project vision, mission, and strategic goals',
     promptGenerator: (projectName: string) => `Create a comprehensive VISION.md file for a project named "${projectName}".
 
-The document should articulate the project's vision, mission, and strategic direction.
+Craft a clear, compelling VISION.md document that captures the product's essence and direction. This document will anchor all future product planning and development.
 
-Include these sections:
-1. Project Vision (a concise statement of the long-term vision)
-2. Mission Statement (what the project aims to accomplish and why it matters)
-3. Core Values (3-5 principles that guide the project)
-4. Target Audience (who the project is intended for, with detailed personas if applicable)
-5. Success Criteria (how the project will measure success)
-6. Strategic Goals (short, medium, and long-term objectives)
-7. Differentiation (what makes this project unique compared to alternatives)
+Focus on these key elements:
 
-Format everything in proper markdown with headings, lists, and appropriate styling.`
+1. Product Essence
+   - Clearly articulate the core product purpose and the central user problem it solves.
+   - Highlight the ideal user and how the product enhances their experience or addresses their needs.
+
+2. Benefits and Value
+   - Emphasize transformative user benefits and experiences rather than features or technical specifics.
+   - Identify the product's unique value proposition—why it's different and better than alternatives.
+
+3. User Experience
+   - Describe the overall user experience you aim to deliver, prioritizing simplicity, intuitiveness, and delight.
+   - Connect UX explicitly to user outcomes and the core product value.
+
+4. Success
+   - Define clear, focused success metrics tied directly to user satisfaction and impact.
+
+Keep the vision concise, inspiring, and focused on clarity, user benefits, and product impact.
+Format in professional Markdown with appropriate headings and styling.`,
+    
+    enhancedPromptGenerator: (projectInfo, fileName) => {
+      const vision = projectInfo.sections[fileName]?.vision || '';
+      
+      return `Create a comprehensive VISION.md file for a project named "${projectInfo.name}".
+
+The project description is: ${projectInfo.description}
+
+User input about vision and mission:
+${vision}
+
+Craft a clear, compelling VISION.md document that captures the product's essence and direction. This document will anchor all future product planning and development.
+
+Focus on these key elements:
+
+1. Product Essence
+   - Clearly articulate the core product purpose and the central user problem it solves.
+   - Highlight the ideal user and how the product enhances their experience or addresses their needs.
+
+2. Benefits and Value
+   - Emphasize transformative user benefits and experiences rather than features or technical specifics.
+   - Identify the product's unique value proposition—why it's different and better than alternatives.
+
+3. User Experience
+   - Describe the overall user experience you aim to deliver, prioritizing simplicity, intuitiveness, and delight.
+   - Connect UX explicitly to user outcomes and the core product value.
+
+4. Success
+   - Define clear, focused success metrics tied directly to user satisfaction and impact.
+
+Keep the vision concise, inspiring, and focused on clarity, user benefits, and product impact.
+Format in professional Markdown with appropriate headings and styling.`;
+    },
+    
+    renderTemplate: (projectInfo, fileName) => {
+      const vision = projectInfo.sections[fileName]?.vision || '';
+      
+      // Extract vision, mission, values, and audience from input
+      const lines = vision.split('\n').filter(line => line.trim() !== '');
+      
+      // Extract based on keywords
+      let visionStatement = '';
+      let missionStatement = '';
+      let valuesList = '- Value 1\n- Value 2\n- Value 3';
+      let audience = '- Primary: \n- Secondary: ';
+      
+      // Simple extraction - look for keywords
+      for (const line of lines) {
+        const lower = line.toLowerCase();
+        if (lower.includes('vision') || lower.includes('goal')) {
+          visionStatement = line.replace(/^.*?vision:?\s*/i, '').trim();
+        } else if (lower.includes('mission') || lower.includes('purpose')) {
+          missionStatement = line.replace(/^.*?mission:?\s*/i, '').trim();
+        } else if (lower.includes('value') || lower.includes('principle')) {
+          // Try to extract values list
+          const valuesText = lines.join('\n');
+          const valuesMatch = valuesText.match(/value[s]?:?(.*?)(?=mission|\n\n|$)/i);
+          if (valuesMatch && valuesMatch[1]) {
+            const items = valuesMatch[1].split('\n')
+              .filter(item => item.trim() !== '')
+              .map(item => `- ${item.trim().replace(/^-\s*/, '')}`);
+            if (items.length > 0) {
+              valuesList = items.join('\n');
+            }
+          }
+        } else if (lower.includes('audience') || lower.includes('user')) {
+          // Try to extract audience info
+          const audienceText = lines.join('\n');
+          const audienceMatch = audienceText.match(/audience:?(.*?)(?=value|\n\n|$)/i);
+          if (audienceMatch && audienceMatch[1]) {
+            audience = audienceMatch[1].trim();
+          }
+        }
+      }
+      
+      // If we couldn't extract specific parts, use the whole text as vision
+      if (!visionStatement && lines.length > 0) {
+        visionStatement = lines[0];
+      }
+      
+      if (!missionStatement && lines.length > 1) {
+        missionStatement = lines[1];
+      }
+      
+      return `# Vision
+
+## Project Vision
+${visionStatement || 'A clear, concise statement of the project\'s long-term vision and purpose.'}
+
+## Mission Statement
+${missionStatement || 'What the project aims to accomplish and why it matters.'}
+
+## Core Values
+${valuesList}
+
+## Target Audience
+${audience}
+
+## Success Criteria
+- Success criterion 1
+- Success criterion 2
+- Success criterion 3
+
+## Strategic Goals
+- Short term (3-6 months): 
+- Medium term (6-12 months): 
+- Long term (1-3 years): 
+
+## Differentiation
+What makes this project unique compared to alternatives.`;
+    }
   }
 };
